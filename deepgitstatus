@@ -1,0 +1,32 @@
+#!/usr/bin/env perl6
+subset Dir where $_.IO ~~ :d;
+subset GitDir of Dir where "$_/.git".IO ~~ :d;
+
+my $watch-untracked;
+sub MAIN(Dir $dir = $*CWD, Bool :$untracked = False) {
+  $watch-untracked = $untracked;
+  git-list($dir.IO)
+}
+
+multi git-list(GitDir $dir) {
+  temp $*CWD = $dir;
+  my @text = $dir.Str;
+  given my $git-text = qx`git status` {
+    @text.push: ' (unpushed commits)'
+      if /'Your branch is ahead of'/;
+    @text.push: ' (changes to be committed)'
+      if /'Changes to be committed'/;
+    @text.push: ' (untracked files present)'
+      if $watch-untracked && /:i 'untracked files'/;
+  }
+  say @text.join("\n") if @text > 1;
+}
+
+multi git-list(Dir $dir) {
+  for $dir.dir.grep(Dir) {
+    git-list($_)
+  }
+
+  # this below doesn't work, probably because of a multi-dispatch bug...
+  #$dir.dir.grep(Dir).map(&git-list);
+}
