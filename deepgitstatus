@@ -10,16 +10,15 @@ sub MAIN(Dir $dir = $*CWD, Bool :$untracked = False) {
 
 multi git-list(GitDir $dir) {
   temp $*CWD = $dir;
-  my @text = $dir.Str;
-  given my $git-text = qx`git status` {
-    @text.push: ' (unpushed commits)'
+  my @text = gather given qx`git status` {
+    take ' (unpushed commits)'
       if /'Your branch is ahead of'/;
-    @text.push: ' (changes to be committed)'
-      if /'Changes to be committed'/;
-    @text.push: ' (untracked files present)'
+    take ' (changes to be committed)'
+      if /'Changes to be committed'/ || /'Changes not staged for commit'/;
+    take ' (untracked files present)'
       if $watch-untracked && /:i 'untracked files'/;
   }
-  say @text.join("\n") if @text > 1;
+  say ($dir.Str, @text).join("\n") if @text;
 }
 
 multi git-list(Dir $dir) {
