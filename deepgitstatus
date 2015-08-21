@@ -22,10 +22,5 @@ multi git-list(GitDir $dir) {
 }
 
 multi git-list(Dir $dir) {
-  for $dir.dir.grep(Dir) {
-    git-list($_)
-  }
-
-  # this below doesn't work, probably because of a multi-dispatch bug...
-  #$dir.dir.grep(Dir).map(&git-list);
+  eager $dir.dir.grep(Dir).map(&git-list);
 }
