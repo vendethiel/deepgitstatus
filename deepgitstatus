@@ -18,6 +18,7 @@ multi git-list(GitDir $dir) {
     take ' (untracked files present)'
       if $watch-untracked && /:i 'untracked files'/;
   }
+  @text.push: ' (no remotes)' if !qx`git remote -v`.trim || qx`git branch -a` !~~ /<|b>'remotes/'/;
   say ($dir.Str, @text).join("\n") if @text;
 }
 
